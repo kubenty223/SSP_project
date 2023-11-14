@@ -1,5 +1,6 @@
 # SSP_project
 Discussed topology has been shown below:
+
 ![ssp](https://github.com/kubenty223/SSP_project/assets/56135959/13c0df6b-8bf9-4117-ab7f-f6cb27f18c0d)
 
 
