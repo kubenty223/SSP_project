@@ -52,7 +52,7 @@ def myNet():
 
 	info( '*** Starting http server\n')
 	srv1.cmd( "python -m SimpleHTTPServer 6789 &")
-	# problem nie da sie podac adresu
+	# problem nie da sie podac adresu :(
 	time.sleep(1)
 
 	info( '*** H1 sending file request to S1\n')
