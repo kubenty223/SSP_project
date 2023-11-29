@@ -16,4 +16,8 @@ Michał Kaszuba
 Sebastian Tlałka  
 Michał Ptak
 
-# How it works? 
+# How it works?
+  # First our traffic generator
+Using generate_files.py script we create three files of three different sizes on each of servers connected to the network. The idea is that the script will be run automatically during boot of each server.
+Then, using python random() function, we create another script, this time on client machine. The script will randomly choose from which server the client will start downloading the file, which will also be chosen randomly.
+This script will also be run during boot of each client and will also work in an infinite loop, so that the traffic will be generated all the time.
