@@ -3,7 +3,7 @@ from mininet.net import Mininet
 from mininet.node import Controller
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info
-
+import time
 
 # to start: sudo python nowa_siec.py
 
@@ -51,10 +51,12 @@ def myNet():
 	
 
 	info( '*** Starting http server\n')
-	srv1.cmd("python_cmd -m http.server 6789 &")
+	srv1.cmd( "python -m SimpleHTTPServer 6789 &")
+	# problem nie da sie podac adresu
+	time.sleep(1)
 
-	info( '*** H1 sneding file request to S1\n')
-        h1.cmd("./file_request.sh 100.0.0.1 zapis50mb.txt")	
+	info( '*** H1 sending file request to S1\n')
+        h1.cmd("./request_file.sh 10.0.0.101:6789 zapis50mb.txt")	
 
 	
 	info( '*** Running CLI\n' )
