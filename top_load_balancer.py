@@ -1,4 +1,5 @@
 from mininet.topo import Topo
+from mininet.cli import CLI
 
 class MyTopo(Topo):
         "Our test topology."
@@ -34,5 +35,18 @@ class MyTopo(Topo):
                 self.addLink(srv2, s1)
                 self.addLink(srv3, s1)
                 self.addLink(srv4, s1)
+
+		#print(self.g.h1.__dict__)
+		#host1 = 
+		#print(self.g.nodes.__dict__) #get('h1') 
+		#self.build()
+		#CLI(self)
+		#host1.net.cmd('pingall')
+		#host1 = Topo.getHost('h1') 
+		#host1.cmd('./first_ping.sh')	
+		#self.h1Pingh2()
+
+	def h1Pingh2(self):
+		h1.cli("echo halo")
 
 topos = { 'mytopo': ( lambda: MyTopo() ) }

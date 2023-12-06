@@ -44,7 +44,7 @@ def myNet():
 	info( '*** Starting network\n')
 	net.start()
 	
-	info( '*** Generating 50 100 150 MB files\n')
+	info( '*** Generating 0.5 GB 1 GB 1,50 GB files\n')
 	srv1.cmd("./gen_files.sh")
 	
 
@@ -58,7 +58,7 @@ def myNet():
 	time.sleep(1)
 
 	info( '*** H1 sending file request to S1\n')
-	#h1.cmd("python request_file.py 10.0.0.101:6789 &")
+	h1.cmd("python request_file.py 10.0.0.101:6789 &")
 
 	info( '*** Running CLI\n' )
 	CLI( net )

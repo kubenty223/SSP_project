@@ -26,5 +26,5 @@ if __name__ == '__main__':
 		nazwa_lokalna = 'zapis_{}'.format(nazwa_pliku)
 
 		pobierz_plik(url, nazwa_lokalna)
-		time.sleep(1)
+		time.sleep(random.randint(1, 5))
 
