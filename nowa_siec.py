@@ -4,6 +4,7 @@ from mininet.node import Controller
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info
 import time
+import os
 
 # to start: sudo python nowa_siec.py
 
@@ -53,21 +54,21 @@ def myNet():
 	srv2.cmd( "python -m SimpleHTTPServer 6789 &")
 	srv3.cmd( "python -m SimpleHTTPServer 6789 &")
 	srv4.cmd( "python -m SimpleHTTPServer 6789 &")
-	
-	# problem nie da sie podac adresu
-	time.sleep(1)
+ 
+        time.sleep(1)
 
-	info( '*** h1-h4 sending file requests in background\n')
-	h1.cmd("python request_file.py 10.0.0.101:6789 &")
-	h2.cmd("python request_file.py 10.0.0.102:6789 &")
-	h3.cmd("python request_file.py 10.0.0.103:6789 &")
-	h4.cmd("python request_file.py 10.0.0.104:6789 &")
+        info( '*** h1-h4 sending file requests in background\n')
+        h1.cmd("nohup python request_file.py 10.0.0.101:6789 h1 &")
+        h2.cmd("nohup python request_file.py 10.0.0.102:6789 h2 &")
+        h3.cmd("nohup python request_file.py 10.0.0.103:6789 h3 &")
+        h4.cmd("nohup python request_file.py 10.0.0.104:6789 h4 &")
 
-	info( '*** Running CLI\n' )
-	CLI( net )
+        info( '*** Running CLI\n' )
+        CLI( net )
 
-	
-	info( '*** Stopping network' )
+
+        info( '*** Stopping network' )
+        os.system("pkill -9 'python*'")
 	net.stop()
 
 if __name__ == '__main__':
