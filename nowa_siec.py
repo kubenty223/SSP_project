@@ -57,8 +57,11 @@ def myNet():
 	# problem nie da sie podac adresu
 	time.sleep(1)
 
-	info( '*** H1 sending file request to S1\n')
+	info( '*** h1-h4 sending file requests in background\n')
 	h1.cmd("python request_file.py 10.0.0.101:6789 &")
+	h2.cmd("python request_file.py 10.0.0.102:6789 &")
+	h3.cmd("python request_file.py 10.0.0.103:6789 &")
+	h4.cmd("python request_file.py 10.0.0.104:6789 &")
 
 	info( '*** Running CLI\n' )
 	CLI( net )
