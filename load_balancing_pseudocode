@@ -1,0 +1,13 @@
+arp_handle
+while 1:
+  client_random_file_choice(random(1,4))
+  computer_http_request(srv_address, file)
+  srv_cpu_usage_generation(random(1,100)):
+    generate_random_number
+    send_rest_api_post_to_controller
+
+  controller_chooses_srv(min(provided_numbers))
+  flow_mod_sent_to_switch(switch_id,srv_ip,out_port_srv, idle_time = 1s)
+  flow_mod_sent_to_switch(switch_id,cli_ip,out_port_cli, idle_time = 1s)
+  srv_sends_file(cli_address, file)
+    
