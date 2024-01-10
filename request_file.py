@@ -22,7 +22,7 @@ if __name__ == '__main__':
                 nazwa_pliku = 'file_{}.txt'.format(str(liczba))
 
 
-                url = 'http://{}/{}'.format(adres, nazwa_pliku)
+                url = 'http://{}/file/{}'.format(adres, nazwa_pliku)
 
                 nazwa_lokalna = '{}/zapis_{}'.format(host, nazwa_pliku)
 

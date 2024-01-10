@@ -1,6 +1,6 @@
 
 from mininet.net import Mininet
-from mininet.node import Controller
+from mininet.node import RemoteController, Controller
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info
 import time
@@ -11,10 +11,10 @@ import os
 def myNet():
 	"Our second topo"
 
-	net = Mininet(controller=Controller)
+	net = Mininet(controller=Controller, waitConnected=True)
 
 	info( '*** Adding controller\n' )
-	net.addController( 'c0' )
+	net.addController( 'c0', controller=RemoteController, ip='127.0.0.1', port=6653 )
 
 	info( '*** Adding hosts\n' )
 	h1 = net.addHost( 'h1', ip='10.0.0.1' )
@@ -50,18 +50,18 @@ def myNet():
 	
 
 	info( '*** Starting http server\n')
-	srv1.cmd( "python -m SimpleHTTPServer 6789 &")
-	srv2.cmd( "python -m SimpleHTTPServer 6789 &")
-	srv3.cmd( "python -m SimpleHTTPServer 6789 &")
-	srv4.cmd( "python -m SimpleHTTPServer 6789 &")
+	srv1.cmd( "python run_server.py &")
+	srv2.cmd( "python run_server.py &")
+	srv3.cmd( "python run_server.py &")
+	srv4.cmd( "python run_server.py &")
  
         time.sleep(1)
 
         info( '*** h1-h4 sending file requests in background\n')
         h1.cmd("nohup python request_file.py 10.0.0.101:6789 h1 &")
-        h2.cmd("nohup python request_file.py 10.0.0.102:6789 h2 &")
-        h3.cmd("nohup python request_file.py 10.0.0.103:6789 h3 &")
-        h4.cmd("nohup python request_file.py 10.0.0.104:6789 h4 &")
+        h2.cmd("nohup python request_file.py 10.0.0.101:6789 h2 &")
+        h3.cmd("nohup python request_file.py 10.0.0.101:6789 h3 &")
+        h4.cmd("nohup python request_file.py 10.0.0.101:6789 h4 &")
 
         info( '*** Running CLI\n' )
         CLI( net )
@@ -69,6 +69,7 @@ def myNet():
 
         info( '*** Stopping network' )
         os.system("pkill -9 'python*'")
+	os.system("mn -c")
 	net.stop()
 
 if __name__ == '__main__':
