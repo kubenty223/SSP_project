@@ -1,5 +1,6 @@
 package pl.edu.agh.kt;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -9,6 +10,11 @@ import org.projectfloodlight.openflow.protocol.OFPacketIn;
 import org.projectfloodlight.openflow.protocol.OFPacketOut;
 import org.projectfloodlight.openflow.protocol.action.OFAction;
 import org.projectfloodlight.openflow.protocol.action.OFActionOutput;
+import org.projectfloodlight.openflow.protocol.action.OFActionSetDlDst;
+import org.projectfloodlight.openflow.protocol.action.OFActionSetDlSrc;
+import org.projectfloodlight.openflow.protocol.action.OFActionSetField;
+import org.projectfloodlight.openflow.protocol.action.OFActionSetNwDst;
+import org.projectfloodlight.openflow.protocol.action.OFActionSetNwSrc.Builder;
 import org.projectfloodlight.openflow.protocol.match.Match;
 import org.projectfloodlight.openflow.protocol.match.MatchField;
 import org.projectfloodlight.openflow.types.EthType;
@@ -36,7 +42,7 @@ public class Flows {
 
 	private static final Logger logger = LoggerFactory.getLogger(Flows.class);
 
-	public static short FLOWMOD_DEFAULT_IDLE_TIMEOUT = 5; // in seconds
+	public static short FLOWMOD_DEFAULT_IDLE_TIMEOUT = 15;// in seconds
 	public static short FLOWMOD_DEFAULT_HARD_TIMEOUT = 0; // infinite
 	public static short FLOWMOD_DEFAULT_PRIORITY = 100;
 
@@ -44,111 +50,170 @@ public class Flows {
 	protected static boolean FLOWMOD_DEFAULT_MATCH_MAC = true;
 	protected static boolean FLOWMOD_DEFAULT_MATCH_IP_ADDR = true;
 	protected static boolean FLOWMOD_DEFAULT_MATCH_TRANSPORT = true;
-	
-	public static List<MacAddress> adresyMac = new ArrayList<>(9);
+
+	MacAddress mac = MacAddress.BROADCAST;
+
 
 	public Flows() {
 		logger.info("Flows() begin/end");
-		logger.info("INICJALIZACJA TABLICY ADRESOW MAC");
-		for (long i = 0; i < 10; i++){
-			MacAddress mac = MacAddress.of("ff:ff:ff:ff:ff:ff");
-			adresyMac.add(mac);
-		}
 	}
 
 	public void simpleAdd(IOFSwitch sw, OFPacketIn pin, FloodlightContext cntx, List<Integer> load) {
-		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
 		
+		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
+
+		List<OFAction> actions = new ArrayList<OFAction>();
 
 		OFPort outPort;
 		outPort = OFPort.ANY;
 
 		if (eth.getEtherType() == EthType.ARP)
 		{
-			outPort = OFPort.FLOOD;
-			logger.info("############### ZALEWAMY ############");
-			adresyMac.set(pin.getInPort().getPortNumber(), eth.getSourceMACAddress());
-			logger.info("ZAPISUJEMY ADRES MAC {} NA PORCIE {}", adresyMac.get(pin.getInPort().getPortNumber()), pin.getInPort().getPortNumber());
-		}
-		else if (eth.getEtherType() == EthType.IPv6)
-		{
-			adresyMac.set(pin.getInPort().getPortNumber(), eth.getSourceMACAddress());
+			ARP arp = (ARP) eth.getPayload();
+			
+			IPv4Address tgtIp = arp.getTargetProtocolAddress();
+			IPv4Address srcIp = arp.getSenderProtocolAddress();
+		
+			if (arp.getTargetHardwareAddress() != mac)	// Logowanie tylko w przypadku zapytania, nie odpowiedzi
+			{
+				
+				logger.info("$$$$$$$$$$$$$$$$$$ ARP $$$$$$$$$$$$$$$$$");
+				logger.info("$$$  SRC: {}, DST: {}  $$$", srcIp, tgtIp);
+				logger.info("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+			}
+			
+			
+			if (tgtIp.toString().equals("10.0.0.1")){
+				outPort = OFPort.of(1);
+			}
+			else if (tgtIp.toString().equals("10.0.0.2")){
+				outPort = OFPort.of(2);
+			}
+			else if (tgtIp.toString().equals("10.0.0.3")){
+				outPort = OFPort.of(3);
+			}
+			else if (tgtIp.toString().equals("10.0.0.4")){
+				outPort = OFPort.of(4);
+			}
+			else if (tgtIp.toString().equals("10.0.0.101")){
+				outPort = OFPort.of(5);
+			}
+			else if (tgtIp.toString().equals("10.0.0.102")){
+				outPort = OFPort.of(6);
+			}
+			else if (tgtIp.toString().equals("10.0.0.103")){
+				outPort = OFPort.of(7);
+			}
+			else if (tgtIp.toString().equals("10.0.0.104")){
+				outPort = OFPort.of(8);
+			}
+			
+			
 		}
 		else if (eth.getEtherType() == EthType.IPv4){
+			IPv4Address dstIp = IPv4Address.of("10.0.0.255");
 			IPv4 ip = (IPv4) eth.getPayload();
 
-			final List<Integer> currLoad = new ArrayList<>(load);
-			int minLoad = Collections.min(currLoad);
 			
 			if(pin.getInPort().getPortNumber() < 5)	// Czy pakiet idzie od hosta
-			{
-				logger.info("testujemy zadanie do serwerka {}, {}", ip.getDestinationAddress().toString(), ip.getSourceAddress().toString());
+			{	
+				MacAddress dstMac = MacAddress.BROADCAST;
+				
+				final List<Integer> currLoad = new ArrayList<>(load);
+				int minLoad = Collections.min(currLoad);
+				String minLoadStr = String.format("%02d", minLoad);
+
+				logger.info("##############################################################");
+				logger.info("#############         CLIENT REQUEST         #################");
 				
 				if (minLoad == currLoad.get(0)){
-					logger.info("WYBRANO SERWER 1 {}", currLoad.get(0));
+					logger.info("#####         WYBRANO SERWER 1 OBCIAZENIE: {} %          #####", minLoadStr);
 					outPort = OFPort.of(5);
-					ip.setDestinationAddress("10.0.0.101");
-					eth.setDestinationMACAddress(adresyMac.get(5));
+					dstIp = IPv4Address.of("10.0.0.101");
+					dstMac = MacAddress.of("00:00:00:00:00:10");
 				}
 				else if (minLoad == currLoad.get(1)){
-					logger.info("WYBRANO SERWER 2 {}", currLoad.get(1));
+					logger.info("#####         WYBRANO SERWER 2 OBCIAZENIE: {} %          #####", minLoadStr);
 					outPort = OFPort.of(6);
-					ip.setDestinationAddress("10.0.0.102");
-					eth.setDestinationMACAddress(adresyMac.get(6));
+					dstIp = IPv4Address.of("10.0.0.102");
+					dstMac = MacAddress.of("00:00:00:00:00:20");
 				}
 				else if (minLoad == currLoad.get(2)){
-					logger.info("WYBRANO SERWER 3 {}", currLoad.get(2));
+					logger.info("#####         WYBRANO SERWER 3 OBCIAZENIE: {} %          #####", minLoadStr);
 					outPort = OFPort.of(7);
-					ip.setDestinationAddress("10.0.0.103");
-					eth.setDestinationMACAddress(adresyMac.get(7));
+					dstIp = IPv4Address.of("10.0.0.103");
+					dstMac = MacAddress.of("00:00:00:00:00:30");
 				}
 				else if (minLoad == currLoad.get(3)){
-					logger.info("WYBRANO SERWER 4 {}", currLoad.get(3));
+					logger.info("#####         WYBRANO SERWER 4 OBCIAZENIE: {} %          #####", minLoadStr);
 					outPort = OFPort.of(8);
-					ip.setDestinationAddress("10.0.0.104");
-					eth.setDestinationMACAddress(adresyMac.get(8));
+					dstIp = IPv4Address.of("10.0.0.104");
+					dstMac = MacAddress.of("00:00:00:00:00:40");
+					
 				}
-				logger.info("testujemy zadanie do serwerka, podmianka adresu destination {} mac {}", ip.getDestinationAddress().toString(), eth.getDestinationMACAddress().toString());
+				
+				logger.info("#####     HOST IP: {}, SERVER IP: {}       #####", ip.getSourceAddress(), dstIp);
+				logger.info("##############################################################");
+				
+				OFActionSetDlDst.Builder setDstMac = sw.getOFFactory().actions().buildSetDlDst();
+				setDstMac.setDlAddr(dstMac);
+				actions.add(setDstMac.build());
+				
+				OFActionSetNwDst.Builder actionChangeIpAddDst = sw.getOFFactory().actions().buildSetNwDst();
+				actionChangeIpAddDst.setNwAddr(dstIp);
+				actions.add(actionChangeIpAddDst.build());
+
 			}
 			else // pakiet idzie od serwera
 			{
-				logger.info("testujemy zwrocik do klienta {}, {}", ip.getDestinationAddress().toString(), ip.getSourceAddress().toString());
+				logger.info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+				logger.info("%%%%%%%%%%%%%        SERVER RESPONSE         %%%%%%%%%%%%%%%%%");
+				logger.info("%%%%%%%%%%%%%     SERVER IP: {}        %%%%%%%%%%%%%%%", ip.getSourceAddress().toString());
 				if (ip.getDestinationAddress().toString().equals("10.0.0.1")){
-					logger.info("zwrot do hosta 1 {}", ip.getDestinationAddress().toString());
+					logger.info("%%%%%%%%%%%%%  ZWROT DO HOSTA 1 IP: {}   %%%%%%%%%%%%%%%", ip.getDestinationAddress().toString());
 					outPort = OFPort.of(1);
 				}
 				else if (ip.getDestinationAddress().toString().equals("10.0.0.2")){
-					logger.info("zwrot do hosta 2 {}", ip.getDestinationAddress().toString());
+					logger.info("%%%%%%%%%%%%%  ZWROT DO HOSTA 2 IP: {}   %%%%%%%%%%%%%%%", ip.getDestinationAddress().toString());
 					outPort = OFPort.of(2);
 				}
 				else if (ip.getDestinationAddress().toString().equals("10.0.0.3")){
-					logger.info("zwrot do hosta 3 {}", ip.getDestinationAddress().toString());
+					logger.info("%%%%%%%%%%%%%  ZWROT DO HOSTA 3 IP: {}   %%%%%%%%%%%%%%%", ip.getDestinationAddress().toString());
 					outPort = OFPort.of(3);
 				}
 				else if (ip.getDestinationAddress().toString().equals("10.0.0.4")){
-					logger.info("zwrot do hosta 4 {}", ip.getDestinationAddress().toString());
+					logger.info("%%%%%%%%%%%%%  ZWROT DO HOSTA 4 IP: {}   %%%%%%%%%%%%%%%", ip.getDestinationAddress().toString());
 					outPort = OFPort.of(4);
 				}
-				//eth.setDestinationMACAddress(adresyMac.get(5));
-				ip.setSourceAddress("10.0.0.101");	// zeby klient nie odrzucal pakietu, bo wyslal je na ten adres
+				
+				logger.info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+				
+
+				IPv4Address srcIp = IPv4Address.of("10.0.0.101");
+				Builder actionChangeIpAddSrc = sw.getOFFactory().actions().buildSetNwSrc();
+				actionChangeIpAddSrc.setNwAddr(srcIp);
+				actions.add(actionChangeIpAddSrc.build());
 			}
 			
 		}
 		
+		// actions
+
+		// Set source/dst mac add
+		OFActionOutput.Builder actionOutPort = sw.getOFFactory().actions().buildOutput();
+		actionOutPort.setPort(outPort);
+		actionOutPort.setMaxLen(Integer.MAX_VALUE);
+		actions.add(actionOutPort.build());
+
 		// FlowModBuilder
 		OFFlowMod.Builder fmb = sw.getOFFactory().buildFlowAdd();
 		// match
 		Match m = createMatchFromPacket(sw, pin.getInPort(), cntx);
-		
-		// actions	
-		List<OFAction> actions = new ArrayList<OFAction>();
-		OFActionOutput.Builder aob = sw.getOFFactory().actions().buildOutput();
-		aob.setPort(outPort);
-		aob.setMaxLen(Integer.MAX_VALUE);
-		actions.add(aob.build());
+				
 		fmb.setMatch(m).setIdleTimeout(FLOWMOD_DEFAULT_IDLE_TIMEOUT).setHardTimeout(FLOWMOD_DEFAULT_HARD_TIMEOUT)
 				.setBufferId(pin.getBufferId()).setOutPort(outPort).setPriority(FLOWMOD_DEFAULT_PRIORITY);
 		fmb.setActions(actions);
+
 		// write flow to switch
 		try {
 			sw.write(fmb.build());

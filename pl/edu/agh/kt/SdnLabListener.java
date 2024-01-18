@@ -6,6 +6,7 @@ import java.util.Map;
 import org.projectfloodlight.openflow.protocol.OFMessage;
 import org.projectfloodlight.openflow.protocol.OFPacketIn;
 import org.projectfloodlight.openflow.protocol.OFType;
+import org.projectfloodlight.openflow.types.EthType;
 import org.projectfloodlight.openflow.types.OFPort;
 
 import net.floodlightcontroller.core.FloodlightContext;
@@ -17,6 +18,8 @@ import net.floodlightcontroller.core.module.IFloodlightModule;
 import net.floodlightcontroller.core.module.IFloodlightService;
 
 import net.floodlightcontroller.core.IFloodlightProviderService;
+import net.floodlightcontroller.packet.Ethernet;
+
 import java.util.ArrayList;
 
 import org.slf4j.Logger;
@@ -49,17 +52,21 @@ public class SdnLabListener implements IFloodlightModule, IOFMessageListener {
 	@Override
 	public net.floodlightcontroller.core.IListener.Command receive(IOFSwitch sw, OFMessage msg,
 			FloodlightContext cntx) {
+		
+		// Pomijamy IPv6
+		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
+		if (eth.getEtherType() == EthType.IPv6)
+		{
+			return Command.STOP;
+		}
 
-		logger.info("************* NEW PACKET IN *************");
+		logger.info("*************************************** NEW PACKET IN ***************************************");
 
 		OFPacketIn pin = (OFPacketIn) msg;
-//		OFPort outPort = OFPort.of(0);
-//		if (pin.getInPort() == OFPort.of(1)) {
-//			outPort = OFPort.of(2);
-//		} else
-//			outPort = OFPort.of(1);
 		
 		flows.simpleAdd(sw, pin, cntx, http.load);
+		
+		logger.info("*********************************************************************************************");
 
 		return Command.STOP;
 	}
